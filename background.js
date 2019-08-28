@@ -1,7 +1,4 @@
 chrome.runtime.onInstalled.addListener(function() {
-  chrome.storage.sync.set({color: '#3aa757'}, function() {
-    console.log("The color is green.");
-  });
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
     chrome.declarativeContent.onPageChanged.addRules([{
       conditions: [new chrome.declarativeContent.PageStateMatcher({
@@ -13,18 +10,11 @@ chrome.runtime.onInstalled.addListener(function() {
   });
 });
 
-// A function to use as callback
-function doStuffWithDom(response) {
-  // console.log('I received the following DOM content:\n' + domContent);
-  console.log(response);
-}
-
 // When the browser-action button is clicked...
-// chrome.runtime.onConnect.addListener(port => {
 chrome.pageAction.onClicked.addListener(function (tab) {
   // ...if it matches, send a message specifying a callback too
   console.log("Sending message to fetch timeline...");
-  chrome.tabs.sendMessage(tab.id, {text: 'fetchTimeline'}, doStuffWithDom);
+  chrome.tabs.sendMessage(tab.id, {text: 'fetchTimeline'});
 });
 // });
 
