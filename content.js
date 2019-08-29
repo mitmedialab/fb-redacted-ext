@@ -1,6 +1,7 @@
 function redact() {
   const redactEl = document.createElement('div');
   redactEl.style.cssText = 'width:100%;height:100%;background-color:black;z-index:500;position:absolute;';
+  redactEl.dataset.redacted = true;
 
   const words = [
     'Nope!',
@@ -21,50 +22,56 @@ function redact() {
   return redactEl;
 }
 
-// Listen for messages
-chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-  const hidePostsBeyondDay = true;
-  const hideViralPosts = false;
-  const hideComments = false;
-
-  // If the received message has the expected format...
-  if (msg.text === 'fetchTimeline') {
-    const postElements = document.querySelector('*[role^="feed"]').querySelectorAll('*[data-timestamp]');
-    const currentSeconds = Date.now() / 1000;
-    postElements.forEach(el => {
-      const post = {
-        timestamp: parseInt(el.dataset.timestamp, 10)
-      };
-      const titleEl = el.querySelector('a[title]');
-      if (titleEl && titleEl.title.toLowerCase() !== 'leave a comment') {
-        post.profileName = titleEl.title;
-      }
-      if (hidePostsBeyondDay && (currentSeconds-post.timestamp > 86400) ) {
+function hideStalePosts(postElements) {
+  const currentSeconds = Date.now() / 1000;
+  postElements.forEach(el => {
+    if (!el.firstChild.dataset.redacted) {
+      const postTimestamp = parseInt(el.dataset.timestamp, 10);
+      const secondsInDay = 86400;
+      if (currentSeconds-postTimestamp > secondsInDay) {
         el.prepend(redact());
       }
+    }
+  });
+}
 
-      if (hideViralPosts) {
-        const reactedEl = el.querySelector('*[aria-label="See who reacted to this"]');
-        let count = "";
-        if (reactedEl) {
-          count = reactedEl.textContent;
-          if (count.length === 0) {
-            const nextSibling = reactedEl.nextSibling;
-            if (nextSibling) {
-              const tooltipEl = nextSibling.querySelector('*[aria-hidden=true]');
-              if (tooltipEl) {
-                count = tooltipEl.textContent;
-              }
-            }
+function hideViralPosts(postElements) {
+  postElements.forEach(el => {
+    const reactedEl = el.querySelector('*[aria-label="See who reacted to this"]');
+    let count = "";
+    if (reactedEl) {
+      count = reactedEl.textContent;
+      if (count.length === 0) {
+        const nextSibling = reactedEl.nextSibling;
+        if (nextSibling) {
+          const tooltipEl = nextSibling.querySelector('*[aria-hidden=true]');
+          if (tooltipEl) {
+            count = tooltipEl.textContent;
           }
         }
-        if (count && (count.indexOf('M') > 0 || count.indexOf('K') > 0 || parseInt(count, 10) > 10)) {
-          el.prepend(redact());
-        }
       }
-    });
+    }
+    if (count && (count.indexOf('M') > 0 || count.indexOf('K') > 0 || parseInt(count, 10) > 10)) {
+      el.prepend(redact());
+    }
+  });
+}
 
-    if (hideComments) {
+// Listen for messages
+chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+  const HIDE_STALE_POSTS = 'HIDE_STALE_POSTS';
+  const HIDE_VIRAL_POSTS = 'HIDE_VIRAL_POSTS';
+  const HIDE_COMMENTS = 'HIDE_COMMENTS';
+  const mode = HIDE_STALE_POSTS;
+
+  if (msg.text === 'fetchTimeline') {
+    const postElements = document.querySelector('*[role^="feed"]').querySelectorAll('*[data-timestamp]');
+    if (mode === HIDE_STALE_POSTS) {
+      hideStalePosts(postElements);
+    } else if (mode === HIDE_VIRAL_POSTS) {
+      hideViralPosts(postElements);
+    } else if (mode === HIDE_COMMENTS) {
+      // TODO: this needs work
       document.querySelector('*[role^="feed"]').querySelectorAll('.commentable_item').forEach(el => {
         while (el.firstChild) {
           el.removeChild(el.firstChild);
