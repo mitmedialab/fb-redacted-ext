@@ -1,6 +1,6 @@
 function redact() {
   const redactEl = document.createElement('div');
-  redactEl.style.cssText = 'width:100%;height:100%;background-color:black;z-index:500;position:absolute;';
+  redactEl.className = 'redacted-wrapper';
   redactEl.dataset.redacted = true;
 
   const words = [
@@ -17,7 +17,7 @@ function redact() {
     'Take control of your feed'];
   const wordEl = document.createElement('div');
   wordEl.textContent = words[Math.floor(Math.random()*words.length)];
-  wordEl.style.cssText = 'color: white; width: 100%; text-align: center; top: 40%; position: absolute; font-size: 50px;';
+  wordEl.className = 'redacted-text';
   redactEl.prepend(wordEl);
   return redactEl;
 }
@@ -27,7 +27,8 @@ function hideStalePosts(postElements) {
   postElements.forEach(el => {
     if (!el.firstChild.dataset.redacted) {
       const postTimestamp = parseInt(el.dataset.timestamp, 10);
-      const secondsInDay = 86400;
+      // const secondsInDay = 86400;
+      const secondsInDay = 100;
       if (currentSeconds-postTimestamp > secondsInDay) {
         el.prepend(redact());
       }
@@ -37,12 +38,12 @@ function hideStalePosts(postElements) {
 
 function hideViralPosts(postElements) {
   postElements.forEach(el => {
-    const reactedEl = el.querySelector('*[aria-label="See who reacted to this"]');
+    const reactionsEl = el.querySelector('*[aria-label="See who reacted to this"]');
     let count = "";
-    if (reactedEl) {
-      count = reactedEl.textContent;
+    if (reactionsEl) {
+      count = reactionsEl.textContent;
       if (count.length === 0) {
-        const nextSibling = reactedEl.nextSibling;
+        const nextSibling = reactionsEl.nextSibling;
         if (nextSibling) {
           const tooltipEl = nextSibling.querySelector('*[aria-hidden=true]');
           if (tooltipEl) {
