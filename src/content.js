@@ -27,8 +27,8 @@ function hideStalePosts(postElements) {
   postElements.forEach(el => {
     if (!el.firstChild.dataset.redacted) {
       const postTimestamp = parseInt(el.dataset.timestamp, 10);
-      // const secondsInDay = 86400;
-      const secondsInDay = 100;
+      const secondsInDay = 86400;
+      // const secondsInDay = 100;
       if (currentSeconds-postTimestamp > secondsInDay) {
         el.prepend(redact());
       }
