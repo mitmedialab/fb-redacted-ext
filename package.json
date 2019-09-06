@@ -1,0 +1,8 @@
+{
+  "name": "Facebook Redacted",
+  "version": "0.0.0",
+  "devDependencies": {
+    "webpack": "^4.39.3",
+    "webpack-cli": "^3.3.7"
+  }
+}
